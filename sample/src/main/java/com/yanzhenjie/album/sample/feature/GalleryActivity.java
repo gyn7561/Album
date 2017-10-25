@@ -15,11 +15,17 @@
  */
 package com.yanzhenjie.album.sample.feature;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
@@ -29,35 +35,30 @@ import com.yanzhenjie.album.Album;
 import com.yanzhenjie.album.api.widget.Widget;
 import com.yanzhenjie.album.sample.R;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+
+import okhttp3.Request;
 
 /**
  * Created by YanZhenjie on 2017/8/17.
  */
 public class GalleryActivity extends AppCompatActivity {
 
-    private static final String[] IMAGE_PATH_LIST = {
-            "http://i3.bbs.fd.zol-img.com.cn/t_s800x5000/g3/M04/07/0E/Cg-4V1GUurCIEoj2AAskZb1av5gAAIe1QFhxFgACyR9799.jpg",
-            "http://attimg.dospy.com/img/day_150423/20150423_bd08f826a59b7424e98eB1ij8y9YAWID.jpg",
-            "http://i2.bbs.fd.zol-img.com.cn/t_s800x5000/g3/M04/07/0E/Cg-4WFGUusyIfe_-AAnBY9FU2tsAAIe1QLiUuQACcF7472.jpg",
-            "http://attimg.dospy.com/img/day_150423/20150423_dc874eab81e679ac49b7evQ5QDh5ZAJN.jpg",
-            "http://i4.bbs.fd.zol-img.com.cn/t_s800x5000/g3/M04/07/0E/Cg-4WFGUus-IP0JPAAmdjBDYP3gAAIe1QMXheEACZ2k634.jpg",
-            "http://attimg.dospy.com/img/day_150423/20150423_8d6ea1ccfaa12e923383181z2NJoFjUU.jpg",
-            "http://i1.bbs.fd.zol-img.com.cn/t_s800x5000/g3/M05/07/0E/Cg-4WFGUutiIaJ-zAArt-GjXe2MAAIe1gAuIlYACu4Q927.jpg",
-            "http://attimg.dospy.com/img/day_150423/20150423_465ae973fe6a63d25fc795O9L3L3Mdl8.jpg",
-            "http://i4.bbs.fd.zol-img.com.cn/t_s800x5000/g4/M07/07/0E/Cg-4WVGUuuOIIoUFABDK84KlTV8AAIe8ABL3NYAEMsL854.jpg",
-            "http://attimg.dospy.com/img/day_150423/20150423_7ef133d562957e27be33aOLlEAEC31RM.jpg",
-            "http://i2.bbs.fd.zol-img.com.cn/t_s800x5000/g4/M07/07/0E/Cg-4WlGUuuiIIbzsAAoUT9aU-aIAAIe8AC2hJ4AChRn222.jpg",
-            "http://attimg.dospy.com/img/day_150423/20150423_26ff8033492435ed0ad6Q1ZzKq79H2oQ.jpg",
-            "http://i5.bbs.fd.zol-img.com.cn/t_s800x5000/g4/M07/07/0E/Cg-4WVGUuuyIXN_MAAfgzhGTg_QAAIe8AELPZAAB-Dm065.jpg",
-            "http://attimg.dospy.com/img/day_150423/20150423_9c701ead392800c28a7fE8Uu7iTUUukC.jpg",
-            "http://attimg.dospy.com/img/day_150423/20150423_ee824127f5f6784addf5vVu6JE6vJQnP.jpg",
-            "http://attimg.dospy.com/img/day_150423/20150423_6e69ca04cab3beda6248VmPZ242k9T6h.jpg",
-            "http://attimg.dospy.com/img/day_150423/20150423_71cc2e187d7820710d10bz3bj36as75j.jpg",
-            "http://attimg.dospy.com/img/day_150423/20150423_e6977d9cff8f545b7022iUwTjc591KI9.jpg"
-    };
-
+    private Handler handler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            ArrayList<String> array = msg.getData().getStringArrayList("array");
+            previewImages(array);
+            return true;
+        }
+    });
     private Toolbar mToolbar;
     private CheckBox mCheckBox;
 
@@ -73,14 +74,33 @@ public class GalleryActivity extends AppCompatActivity {
         findViewById(R.id.btn_gallery).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                previewImages();
+                //
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Document doc = Jsoup.parse(new URL("https://www.baidu.com"), 5000);
+
+                            Message message = new Message();
+                            Bundle bundle = new Bundle();
+                            ArrayList<String> arrayList = new ArrayList<>();  
+                            arrayList.add("http://img.ivsky.com/img/tupian/pre/201708/14/qiufen-007.jpg");
+                            arrayList.add("http://img.taopic.com/uploads/allimg/120727/201995-120HG1030762.jpg");
+                            bundle.putStringArrayList("array", arrayList);
+                            message.setData(bundle);
+                            handler.sendMessage(message);
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).start();
+                //previewImages();
             }
         });
     }
 
-    private void previewImages() {
-        ArrayList<String> imageList = new ArrayList<>();
-        Collections.addAll(imageList, IMAGE_PATH_LIST);
+    private void previewImages(ArrayList<String> imageList) {
 
         Album.gallery(this)
                 .requestCode(2)
